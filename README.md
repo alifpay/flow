@@ -31,7 +31,7 @@ rule[age] = struct{
     max,
     equal,
     any[],
-    all[]
+    not[]
 }
 
 
