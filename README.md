@@ -60,3 +60,32 @@ example
         }
     }]
 ```
+
+Flow 
+
+```Go
+type Flow struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	StartNode *Node  `json:"start_node"`
+}
+// Node of flow
+type Node struct {
+	Rules     []Condition `json:"rules,omitempty"`
+	Task      *Task       `json:"task,omitempty"`
+	TrueNode  *Node       `json:"true_node,omitempty"`
+	FalseNode *Node       `json:"false_node,omitempty"`
+}
+
+// Id of task function
+type Task struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+```
+
+Todo :  
+database  
+example  
+test  
+
