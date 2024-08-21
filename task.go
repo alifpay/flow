@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type TaskFunc func(ctx context.Context, input map[string]any) error
+type TaskFunc func(ctx context.Context, data map[string]any) error
 
 var taskFuncs = map[string]TaskFunc{}
 
@@ -14,9 +14,9 @@ func Register(id string, fn TaskFunc) {
 	taskFuncs[id] = fn
 }
 
-func runTask(ctx context.Context, t *Task, input map[string]any) error {
+func runTask(ctx context.Context, t *Task, data map[string]any) error {
 	if fn, found := taskFuncs[t.Id]; found {
-		return fn(ctx, input)
+		return fn(ctx, data)
 	}
-	return fmt.Errorf("Task %q not found", t.Name)
+	return fmt.Errorf("функция %q не найдена", t.Name)
 }

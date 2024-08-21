@@ -5,6 +5,8 @@ import (
 	"reflect"
 )
 
+var dataInputs map[string]string
+
 // ConditionType определяет тип условия (AND или OR)
 type ConditionType string
 
@@ -35,23 +37,27 @@ func Validate(rules []Condition, data map[string]any) (valid bool, errStr string
 	for _, rule := range rules {
 		valid, errStr = conditionIsValid(rule, data)
 		if !valid && rule.Type == AND {
+			errStr = rule.ErrMessage + ": " + errStr
 			return
 		} else if valid && rule.Type == OR {
 			return
 		}
 		// Если есть подусловия, проверяем их
 		if rule.SubConditions != nil {
-			subValid, subErr := conditionIsValid(*rule.SubConditions, data)
-			if !subValid && rule.Type == AND {
-				valid = false
-				errStr = subErr
+			valid, errStr = conditionIsValid(*rule.SubConditions, data)
+			if !valid && rule.Type == AND {
+				errStr = rule.ErrMessage + ": " + errStr
 				return
-			} else if subValid && rule.Type == OR {
-				return true, ""
+			} else if valid && rule.Type == OR {
+				return
 			}
 		}
+		// rule type OR
+		if !valid {
+			errStr = rule.ErrMessage + ": " + errStr
+			return
+		}
 	}
-
 	return true, ""
 }
 
@@ -60,17 +66,18 @@ func conditionIsValid(rule Condition, data map[string]any) (bool, string) {
 	for field, validation := range rule.Validation {
 		value, exists := data[field]
 		if !exists && validation.Required && rule.Type == AND {
-			return false, fmt.Sprintf("%s is required", field)
+			return false, fmt.Sprintf("%s обязателен", dataInputs[field])
 		}
 		if !exists {
 			continue
 		}
+
 		// Проверка на минимальное значение
 		if validation.Min != nil {
 			if v, ok := toFloat(value); ok {
 				if v < *validation.Min {
 					if rule.Type == AND {
-						return false, fmt.Sprintf("%s must be at least %v", field, validation.Min)
+						return false, fmt.Sprintf("%s должен быть не менее %v, значение: %v", dataInputs[field], validation.Min, value)
 					}
 					orValid = false
 				}
@@ -81,7 +88,7 @@ func conditionIsValid(rule Condition, data map[string]any) (bool, string) {
 			if v, ok := toFloat(value); ok {
 				if v > *validation.Max {
 					if rule.Type == AND {
-						return false, fmt.Sprintf("%s must be at most %v", field, validation.Max)
+						return false, fmt.Sprintf("%s должен быть не более %v, значение: %v", dataInputs[field], validation.Max, value)
 					}
 					orValid = false
 				}
@@ -90,21 +97,21 @@ func conditionIsValid(rule Condition, data map[string]any) (bool, string) {
 		// Дополнительные проверки можно добавить здесь
 		if validation.Equal != nil && !equal(value, validation.Equal) {
 			if rule.Type == AND {
-				return false, fmt.Sprintf("%s must be equal to %v", field, validation.Equal)
+				return false, fmt.Sprintf("%s должен быть равен %v, значение: %v", dataInputs[field], validation.Equal, value)
 			}
 			orValid = false
 		}
 
 		if validation.Any != nil && !fnAny(validation.Any, value) {
 			if rule.Type == AND {
-				return false, fmt.Sprintf("%s must be in %v", field, validation.Any)
+				return false, fmt.Sprintf("%s должен быть в %v, значение: %v", field, validation.Any, value)
 			}
 			orValid = false
 		}
 
 		if validation.Not != nil && !fnNot(validation.Not, value) {
 			if rule.Type == AND {
-				return false, fmt.Sprintf("%s must not be in %v", field, validation.Not)
+				return false, fmt.Sprintf("%s не должен быть в %v, значение: %v", field, validation.Not, value)
 			}
 			orValid = false
 		}
