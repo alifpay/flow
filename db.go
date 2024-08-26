@@ -10,6 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// load data inputs for validation and cache
+func InitDataInputs(ctx context.Context, db *pgxpool.Pool) (err error) {
+	dataInputs, err = GetDataInputs(ctx, db)
+	return
+}
+
 func EditFlow(ctx context.Context, db *pgxpool.Pool, jsonData []byte) error {
 	var f Flow
 	err := json.Unmarshal(jsonData, &f)
@@ -77,6 +83,9 @@ func isValidEditCondition(rule Condition) error {
 		return fmt.Errorf("errMessage is too short: %s", rule.ErrMessage)
 	}
 	for field, validation := range rule.Validation {
+		if _, found := dataInputs[field]; !found {
+			return fmt.Errorf("input %q not found", field)
+		}
 		if validation.Min != nil || validation.Max != nil {
 			if validation.Equal != nil {
 				return fmt.Errorf("field %s: can't have equal and min/max at the same time", field)
@@ -111,7 +120,7 @@ func GetFlow(ctx context.Context, db *pgxpool.Pool, id string) (*Flow, error) {
 }
 
 func GetDataInputs(ctx context.Context, db *pgxpool.Pool) (map[string]string, error) {
-	dataInputs := make(map[string]string)
+	inputs := make(map[string]string)
 	rows, err := db.Query(ctx, "SELECT id, name FROM data_inputs")
 	if err != nil {
 		return nil, err
@@ -123,9 +132,9 @@ func GetDataInputs(ctx context.Context, db *pgxpool.Pool) (map[string]string, er
 		if err != nil {
 			return nil, err
 		}
-		dataInputs[id] = name
+		inputs[id] = name
 	}
-	return dataInputs, nil
+	return inputs, nil
 }
 
 func EditDataInput(ctx context.Context, db *pgxpool.Pool, jsonData []byte) error {

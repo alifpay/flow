@@ -6,10 +6,10 @@ CREATE TABLE flows(
 
 CREATE TABLE data_inputs(
     id VARCHAR(63) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE functions(
     id VARCHAR(63) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL
 );

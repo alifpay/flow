@@ -89,3 +89,28 @@ database +
 example  
 test  
 
+```Go
+
+func PrintHello(ctx context.Context, data map[string]any, errStr string) error {
+    // Check if the context has been canceled
+    select {
+    case <-ctx.Done():
+        return ctx.Err()
+    default:
+        // Continue processing
+    }
+    fmt.Println("Hello world!", errStr)
+    // Example of a successful operation
+    return nil
+}
+
+    //init datainputs
+    err := flow.InitDataInputs(ctx, db)
+    if err != {
+        log.Fatal(err)
+    }
+
+    // register your task function
+    flow.RegisterTask("PrintHello", PrintHello)
+```
+
