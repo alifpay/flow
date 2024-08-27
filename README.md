@@ -106,7 +106,7 @@ func PrintHello(ctx context.Context, data map[string]any, errStr string) error {
 
     //init datainputs
     err := flow.InitDataInputs(ctx, db)
-    if err != {
+    if err != nil{
         log.Fatal(err)
     }
 

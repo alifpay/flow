@@ -25,16 +25,17 @@ type Task struct {
 	Name string `json:"name"`
 }
 
+// Process flow node
 // if rules are correct go to true node
 // if rules are not valid go to false node
-func (n *Node) Evaluate(ctx context.Context, input map[string]interface{}, errString string) error {
+func (n *Node) Process(ctx context.Context, input map[string]interface{}, errString string) error {
 	// Если есть правила, проверяем их
 	if len(n.Rules) != 0 {
 		valid, errStr := Validate(n.Rules, input)
 		if !valid {
 			// Если есть узел False, выполняем его
 			if n.FalseNode != nil {
-				return n.FalseNode.Evaluate(ctx, input, errStr)
+				return n.FalseNode.Process(ctx, input, errStr)
 			}
 			return fmt.Errorf("validation failed: %s", errStr)
 		}
@@ -50,5 +51,5 @@ func (n *Node) Evaluate(ctx context.Context, input map[string]interface{}, errSt
 		return nil
 	}
 	// Если есть следующий узел, выполняем его
-	return n.TrueNode.Evaluate(ctx, input, "")
+	return n.TrueNode.Process(ctx, input, "")
 }
